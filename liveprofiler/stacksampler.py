@@ -13,21 +13,10 @@ Then curl localhost:16384 to get a list of stack frames and call counts.
 """
 
 from __future__ import print_function
-import sys
 import atexit
 import collections
 import signal
 import time
-from werkzeug.serving import BaseWSGIServer, WSGIRequestHandler
-from werkzeug.wrappers import Request, Response
-try:
-    from nylas.logging import get_logger
-    logger = get_logger()
-except ImportError:
-    class _Logger(object):
-        def info(msg):
-            print(msg, file=sys.stderr)
-    logger = _Logger()
 
 
 class Sampler(object):
@@ -36,7 +25,7 @@ class Sampler(object):
     stack every `interval` seconds and keeps track of counts by frame. Because
     this uses signals, it only works on the main thread.
     """
-    def __init__(self, interval=0.005):
+    def __init__(self, interval):
         self.interval = interval
         self._started = None
         self._stack_counts = collections.defaultdict(int)
@@ -89,37 +78,50 @@ class Sampler(object):
         self.stop()
 
 
-class Emitter(object):
-    """A really basic HTTP server that listens on (host, port) and serves the
-    process's profile data when requested. Resets internal sampling stats if
-    reset=true is passed."""
-    def __init__(self, sampler, host, port):
-        self.sampler = sampler
-        self.host = host
-        self.port = port
+class ProfilingMiddleware(object):
+    def __init__(self, app, interval):
+        self.app = app
+        self.sampler = Sampler(interval)
 
-    def handle_request(self, environ, start_response):
-        stats = self.sampler.output_stats()
-        request = Request(environ)
-        if request.args.get('reset') in ('1', 'true'):
-            self.sampler.reset()
-        response = Response(stats)
-        return response(environ, start_response)
+    def start(self):
+        self.sampler.start()
 
-    def run(self):
-        server = BaseWSGIServer(self.host, self.port, self.handle_request,
-                                _QuietHandler)
-        server.log = lambda *args, **kwargs: None
-        logger.info('Serving profiles on port {}'.format(self.port))
-        server.serve_forever()
+    def __call__(self, environ, start_response):
+        import pudb; pudb.set_trace()
+        return self.app(environ, start_response)
 
 
-class _QuietHandler(WSGIRequestHandler):
-    def log_request(self, *args, **kwargs):
-        """Suppress request logging so as not to pollute application logs."""
-        pass
-
-
+# class Emitter(object):
+#     """A really basic HTTP server that listens on (host, port) and serves the
+#     process's profile data when requested. Resets internal sampling stats if
+#     reset=true is passed."""
+#     def __init__(self, sampler, host, port):
+#         self.sampler = sampler
+#         self.host = host
+#         self.port = port
+#
+#     def handle_request(self, environ, start_response):
+#         stats = self.sampler.output_stats()
+#         request = Request(environ)
+#         if request.args.get('reset') in ('1', 'true'):
+#             self.sampler.reset()
+#         response = Response(stats)
+#         return response(environ, start_response)
+#
+#     def run(self):
+#         server = BaseWSGIServer(self.host, self.port, self.handle_request,
+#                                 _QuietHandler)
+#         server.log = lambda *args, **kwargs: None
+#         logger.info('Serving profiles on port {}'.format(self.port))
+#         server.serve_forever()
+#
+#
+# class _QuietHandler(WSGIRequestHandler):
+#     def log_request(self, *args, **kwargs):
+#         """Suppress request logging so as not to pollute application logs."""
+#         pass
+#
+#
 def run_profiler(host='0.0.0.0', port=16384):
     sampler = Sampler()
     sampler.start()
