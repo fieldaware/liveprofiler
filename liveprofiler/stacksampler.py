@@ -1,15 +1,5 @@
 """
-Statistical profiling for long-running Python processes. This was built to work
-with gevent, but would probably work if you ran the emitter in a separate OS
-thread too.
-
-Example usage
--------------
-Add
->>> gevent.spawn(run_profiler, '0.0.0.0', 16384)
-
-in your program to start the profiler, and run the emitter in a new greenlet.
-Then curl localhost:16384 to get a list of stack frames and call counts.
+Statistical profiling for long-running Python processes.
 """
 
 from __future__ import print_function
@@ -79,51 +69,25 @@ class Sampler(object):
 
 
 class ProfilingMiddleware(object):
-    def __init__(self, app, interval):
-        self.app = app
-        self.sampler = Sampler(interval)
+    SECRET_HEADER_NAME = 'PROFILER_TOKEN'
 
-    def start(self):
+    def __init__(self, app, interval, secret_header):
+        self.app = app
+        self.secret_header = secret_header
+        self.sampler = Sampler(interval)
         self.sampler.start()
 
     def __call__(self, environ, start_response):
-        import pudb; pudb.set_trace()
+        if environ.get('REQUEST_METHOD') != 'GET' or environ.get('PATH_INFO') != '/liveprofiler':
+            return self.app(environ, start_response)
+
+        if environ.get('HTTP_{}'.format(ProfilingMiddleware.SECRET_HEADER_NAME)) != self.secret_header:
+            start_response('403 YOU SHALL NOT PASS!!!!!!!!!!!!1111oneoneonelephant', [])
+            return []
+        else:
+            stats = self.sampler.output_stats()
+            self.sampler.reset()
+            start_response('200 OK', [])
+            return [stats]
+
         return self.app(environ, start_response)
-
-
-# class Emitter(object):
-#     """A really basic HTTP server that listens on (host, port) and serves the
-#     process's profile data when requested. Resets internal sampling stats if
-#     reset=true is passed."""
-#     def __init__(self, sampler, host, port):
-#         self.sampler = sampler
-#         self.host = host
-#         self.port = port
-#
-#     def handle_request(self, environ, start_response):
-#         stats = self.sampler.output_stats()
-#         request = Request(environ)
-#         if request.args.get('reset') in ('1', 'true'):
-#             self.sampler.reset()
-#         response = Response(stats)
-#         return response(environ, start_response)
-#
-#     def run(self):
-#         server = BaseWSGIServer(self.host, self.port, self.handle_request,
-#                                 _QuietHandler)
-#         server.log = lambda *args, **kwargs: None
-#         logger.info('Serving profiles on port {}'.format(self.port))
-#         server.serve_forever()
-#
-#
-# class _QuietHandler(WSGIRequestHandler):
-#     def log_request(self, *args, **kwargs):
-#         """Suppress request logging so as not to pollute application logs."""
-#         pass
-#
-#
-def run_profiler(host='0.0.0.0', port=16384):
-    sampler = Sampler()
-    sampler.start()
-    e = Emitter(sampler, host, port)
-    e.run()
