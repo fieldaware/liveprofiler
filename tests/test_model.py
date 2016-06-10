@@ -36,7 +36,7 @@ def test_save(db):
 
     with db.getdb() as d:
         assert dict([(k, d[k]) for k in d.keys()]) == {
-            'test_sampler(test_sampler);testing_function(test_sampler)': '[{"count": 50, "host": "localhost", "time": 1}, {"count": 100, "host": "localhost", "time": 1}]',
+            'test_sampler(test_sampler);testing_function(test_sampler)': '[{"count": 100, "host": "localhost", "time": 1}, {"count": 50, "host": "localhost", "time": 1}]',
             'test_sampler(test_sampler);testing_function2(test_sampler)': '[{"count": 128, "host": "localhost", "time": 1}]',
             'test_sampler(test_sampler);testing_function3(test_sampler)': '[{"count": 126, "host": "localhost", "time": 1}]'
         }
