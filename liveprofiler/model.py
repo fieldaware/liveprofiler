@@ -5,6 +5,7 @@ import time
 import contextlib
 import dbm
 from os.path import join
+from stacksampler import Sampler
 
 class ProflingModel(object):
     def __init__(self, dbdir):
@@ -53,6 +54,6 @@ class ProflingModel(object):
                     v = int(e['count'])
                     if ((from_ is None or ts >= from_) and (until_ is None or ts <= until_)):
                         value += v
-                frames = k.split(';')
+                frames = k.split(Sampler.STACK_SEPARATOR)
                 results.append((frames, value))
         return results
