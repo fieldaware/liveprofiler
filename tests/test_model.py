@@ -45,6 +45,8 @@ def test_load(db):
     with mock.patch('time.time', return_value=1):
         db.save('localhost', samples)
 
-    assert (['test_sampler(test_sampler)', 'testing_function3(test_sampler)'], 126) in db.load()
-    assert (['test_sampler(test_sampler)', 'testing_function2(test_sampler)'], 128) in db.load()
-    assert (['test_sampler(test_sampler)', 'testing_function(test_sampler)'], 150) in db.load()
+    loaded = db.load()
+    assert (['test_sampler(test_sampler)', 'testing_function3(test_sampler)'], 126) in loaded
+    assert (['test_sampler(test_sampler)', 'testing_function2(test_sampler)'], 128) in loaded
+    # sum of 100 and 50
+    assert (['test_sampler(test_sampler)', 'testing_function(test_sampler)'], 150) in loaded
