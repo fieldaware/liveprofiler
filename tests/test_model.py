@@ -3,6 +3,17 @@ import os
 import dbm
 from datetime import datetime
 
+samples = {
+    u'elapsed': 1.2000219821929932,
+    u'granularity': 0.001,
+    u'stacks': [
+        {u'count': 128, u'frame': u'test_sampler(test_sampler);testing_function2(test_sampler)'},
+        {u'count': 126, u'frame': u'test_sampler(test_sampler);testing_function3(test_sampler)'},
+        {u'count': 50, u'frame': u'test_sampler(test_sampler);testing_function(test_sampler)'},
+        {u'count': 100, u'frame': u'test_sampler(test_sampler);testing_function(test_sampler)'}
+    ]
+}
+
 def test_db_ctx_manager(db):
     with db.getdb() as d:
         d['foo'] = 'bar'
@@ -20,21 +31,20 @@ def test_db_path(db):
 
 
 def test_save(db):
-    samples = {
-        u'elapsed': 1.2000219821929932,
-        u'granularity': 0.001,
-        u'stacks': [
-            {u'count': 128, u'frame': u'test_sampler(test_sampler);testing_function2(test_sampler)'},
-            {u'count': 126, u'frame': u'test_sampler(test_sampler);testing_function3(test_sampler)'},
-            {u'count': 50, u'frame': u'test_sampler(test_sampler);testing_function(test_sampler)'}
-        ]
-    }
     with mock.patch('time.time', return_value=1):
         db.save('localhost', samples)
 
     with db.getdb() as d:
         assert dict([(k, d[k]) for k in d.keys()]) == {
-            'test_sampler(test_sampler);testing_function(test_sampler)': '{"count": 50, "host": "localhost", "time": 1}',
-            'test_sampler(test_sampler);testing_function2(test_sampler)': '{"count": 128, "host": "localhost", "time": 1}',
-            'test_sampler(test_sampler);testing_function3(test_sampler)': '{"count": 126, "host": "localhost", "time": 1}'
+            'test_sampler(test_sampler);testing_function(test_sampler)': '[{"count": 50, "host": "localhost", "time": 1}, {"count": 100, "host": "localhost", "time": 1}]',
+            'test_sampler(test_sampler);testing_function2(test_sampler)': '[{"count": 128, "host": "localhost", "time": 1}]',
+            'test_sampler(test_sampler);testing_function3(test_sampler)': '[{"count": 126, "host": "localhost", "time": 1}]'
         }
+
+def test_load(db):
+    with mock.patch('time.time', return_value=1):
+        db.save('localhost', samples)
+
+    assert (['test_sampler(test_sampler)', 'testing_function3(test_sampler)'], 126) in db.load()
+    assert (['test_sampler(test_sampler)', 'testing_function2(test_sampler)'], 128) in db.load()
+    assert (['test_sampler(test_sampler)', 'testing_function(test_sampler)'], 150) in db.load()
