@@ -1,2 +1,0 @@
-global-include *.py
-include requirements.txt test_requirements.txt
