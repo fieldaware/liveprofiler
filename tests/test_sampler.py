@@ -41,12 +41,12 @@ def test_sampler(sampler):
 
     def testing_function2():
         now = time.time()
-        while time.time() < now + 0.2:
+        while time.time() < now + 0.3:
             pass
 
     def testing_function3():
         now = time.time()
-        while time.time() < now + 0.3:
+        while time.time() < now + 0.4:
             pass
 
     sampler.start()
@@ -60,7 +60,7 @@ def test_sampler(sampler):
 
     sampler.stop()
     # at least time of execution of testing_function2 and testing_function
-    assert stats['elapsed'] >= 0.5
+    assert stats['elapsed'] >= 0.1 + 0.3 + 0.4 + 0.3
 
     # stacks are sorted by stack counts which is correlated with the function duration
     assert 'test_sampler(test_sampler);testing_function(test_sampler)' in stats['stacks'][2]['frame']
@@ -69,5 +69,5 @@ def test_sampler(sampler):
 
     # number of collected samples depends on the sampler inteval and duration of stack execution
     assert 0.1 / sampler.interval >= float(stats['stacks'][2]['count'])
-    assert 0.3 / sampler.interval >= float(stats['stacks'][1]['count'])
-    assert 0.2 * 2 / sampler.interval >= float(stats['stacks'][0]['count'])
+    assert 0.5 / sampler.interval >= float(stats['stacks'][1]['count'])
+    assert 0.3 * 2 / sampler.interval >= float(stats['stacks'][0]['count'])

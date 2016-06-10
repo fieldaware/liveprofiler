@@ -1,3 +1,4 @@
+import json
 import mock
 import os
 import dbm
@@ -35,11 +36,12 @@ def test_save(db):
         db.save('localhost', samples)
 
     with db.getdb() as d:
-        assert dict([(k, d[k]) for k in d.keys()]) == {
-            'test_sampler(test_sampler);testing_function(test_sampler)': '[{"count": 50, "host": "localhost", "time": 1}, {"count": 100, "host": "localhost", "time": 1}]',
-            'test_sampler(test_sampler);testing_function2(test_sampler)': '[{"count": 128, "host": "localhost", "time": 1}]',
-            'test_sampler(test_sampler);testing_function3(test_sampler)': '[{"count": 126, "host": "localhost", "time": 1}]'
-        }
+        records = dict([(k, d[k]) for k in d.keys()])
+
+        assert {"count": 50, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function(test_sampler)'])
+        assert {"count": 100, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function(test_sampler)'])
+        assert {"count": 128, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function2(test_sampler)'])
+        assert {"count": 126, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function3(test_sampler)'])
 
 def test_load(db):
     with mock.patch('time.time', return_value=1):
