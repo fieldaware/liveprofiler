@@ -1,7 +1,8 @@
+import tempfile
 import webtest
 import pytest
 import flask
-from liveprofiler import stacksampler
+from liveprofiler import stacksampler, model
 
 SAMPLER_INTERVAL = 1
 PROFILING_SECRET = 'secret'
@@ -20,3 +21,12 @@ def post_test():
 def app(request):
     with_middleware = stacksampler.ProfilingMiddleware(application, SAMPLER_INTERVAL, PROFILING_SECRET)
     return webtest.TestApp(with_middleware)
+
+@pytest.fixture()
+def db(request):
+    d = tempfile.mkdtemp()
+    return model.ProflingModel(d)
+
+@pytest.fixture()
+def sampler(request):
+    return stacksampler.Sampler(0.001)

@@ -71,11 +71,10 @@ def data():
             entries = db[k].split()
             value = 0
             for e in entries:
-                host, port, ts, v = e.split(':')
+                host, ts, v = e.split(':')
                 ts = int(ts)
                 v = int(v)
-                if ((from_ is None or ts >= from_) and
-                        (until is None or ts <= until)):
+                if ((from_ is None or ts >= from_) and (until is None or ts <= until)):
                     value += v
             frames = k.split(';')
             root.add(frames, value)

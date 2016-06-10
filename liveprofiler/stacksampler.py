@@ -7,9 +7,11 @@ import atexit
 import collections
 import signal
 import time
+import json
 
 
 class Sampler(object):
+    STACK_SEPARATOR = ";"
     """
     A simple stack sampler for low-overhead CPU profiling: samples the call
     stack every `interval` seconds and keeps track of counts by frame. Because
@@ -36,7 +38,7 @@ class Sampler(object):
             stack.append(self._format_frame(frame))
             frame = frame.f_back
 
-        stack = ';'.join(reversed(stack))
+        stack = Sampler.STACK_SEPARATOR.join(reversed(stack))
         self._stack_counts[stack] += 1
         signal.setitimer(signal.ITIMER_VIRTUAL, self.interval)
 
@@ -46,15 +48,14 @@ class Sampler(object):
 
     def output_stats(self):
         if self._started is None:
-            return ''
+            return json.dumps({})
         elapsed = time.time() - self._started
-        lines = ['elapsed {}'.format(elapsed),
-                 'granularity {}'.format(self.interval)]
-        ordered_stacks = sorted(self._stack_counts.items(),
-                                key=lambda kv: kv[1], reverse=True)
-        lines.extend(['{} {}'.format(frame, count)
-                      for frame, count in ordered_stacks])
-        return '\n'.join(lines) + '\n'
+        stats = {}
+        stats['elapsed'] = elapsed
+        stats['granularity'] = self.interval
+        ordered_stacks = sorted(self._stack_counts.items(), key=lambda kv: kv[1], reverse=True)
+        stats['stacks'] = [dict(frame=frame, count=count) for frame, count in ordered_stacks]
+        return json.dumps(stats)
 
     def reset(self):
         self._started = time.time()
