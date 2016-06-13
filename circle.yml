@@ -13,4 +13,4 @@ dependencies:
 
 test:
   override:
-    - tox -- --junit-xml=$CIRCLE_ARTIFACTS/liveprofiler_tests_results.xml --cov liveprofiler --cov-report term-missing --cov-report html --cov-config=.coveragerccircle
+    - tox -- --junit-xml=$CIRCLE_ARTIFACTS/liveprofiler_tests_results.xml --cov-report html
