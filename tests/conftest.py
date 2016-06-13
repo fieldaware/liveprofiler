@@ -2,7 +2,7 @@ import tempfile
 import webtest
 import pytest
 import flask
-from liveprofiler import stacksampler, model
+from liveprofiler import stacksampler, model, visualizer
 
 SAMPLER_INTERVAL = 1
 PROFILING_SECRET = 'secret'
@@ -30,3 +30,19 @@ def db(request):
 @pytest.fixture()
 def sampler(request):
     return stacksampler.Sampler(0.001)
+
+@pytest.fixture()
+def visualizer_app(request):
+    cfg_list = [
+        '[global]',
+        'DBPATH = /tmp/test',
+        '[collector]',
+        'secret_header = super!S3cr3t!',
+        'hosts=localhost,otherhost.fa,google.com',
+    ]
+
+    _, cfg_path = tempfile.mkstemp()
+    with open(cfg_path, 'w') as f:
+        f.writelines('\n'.join(cfg_list))
+
+    return webtest.TestApp(visualizer.make_app(cfg_path))

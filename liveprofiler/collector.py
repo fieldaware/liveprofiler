@@ -1,38 +1,35 @@
+from stacksampler import ProfilingMiddleware
 import model
 import time
-import click
 import requests
 import logging
 
 log = logging.getLogger('collector')
 
-def collect(dbpath, host, port, db):
+def collect(db, host, secret_header):
+    profiling_path = ProfilingMiddleware.PROFILING_PATH
+    url = 'http://{}/{}'.format(host, profiling_path)
+    headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
     try:
-        resp = requests.get('http://{}:{}?reset=true'.format(host, port))
+        resp = requests.get(url, headers=headers)
         resp.raise_for_status()
     except (requests.ConnectionError, requests.HTTPError) as exc:
-        log.warning('Error collecting data', error=exc, host=host, port=port)
+        log.warning('Error collecting data', error=exc, host=host)
         return
     payload = resp.json()
     try:
-        db.save(payload, host, port, dbpath)
+        db.save(host, payload)
     except Exception as exc:
-        log.warning('Error saving data', error=exc, host=host, port=port)
+        log.warning('Error saving data', error=exc, host=host)
         return
-    log.info('Data collected', host=host, port=port, num_stacks=len(payload['stack']))
+    log.info('Data collected', host=host, num_stacks=len(payload['stacks']))
 
 
-@click.command()
-@click.option('--dbpath', '-d', default='/var/lib/stackcollector/db')
-@click.option('--host', '-h', multiple=True)
-@click.option('--interval', '-i', type=int, default=600)
-@click.option('--secret_header', '-s', type=str)
 def run(dbpath, host, secret_header, interval):
-    # TODO(emfree) document port format; handle parsing errors
     db = model.ProflingModel(dbpath)
     while True:
         for h in host:
-            collect(dbpath, h, secret_header, db)
+            collect(db, h, secret_header)
         time.sleep(interval)
 
 if __name__ == '__main__':

@@ -71,6 +71,7 @@ class Sampler(object):
 
 class ProfilingMiddleware(object):
     SECRET_HEADER_NAME = 'PROFILER_TOKEN'
+    PROFILING_PATH = '/liveprofiler'
 
     def __init__(self, app, interval, secret_header):
         self.app = app
@@ -79,7 +80,7 @@ class ProfilingMiddleware(object):
         self.sampler.start()
 
     def __call__(self, environ, start_response):
-        if environ.get('REQUEST_METHOD') != 'GET' or environ.get('PATH_INFO') != '/liveprofiler':
+        if environ.get('REQUEST_METHOD') != 'GET' or environ.get('PATH_INFO') != ProfilingMiddleware.PROFILING_PATH:
             return self.app(environ, start_response)
 
         if environ.get('HTTP_{}'.format(ProfilingMiddleware.SECRET_HEADER_NAME)) != self.secret_header:

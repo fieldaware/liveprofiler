@@ -1,14 +1,34 @@
 import calendar
 import click
 import dateparser
+import requests
+
+from ConfigParser import SafeConfigParser
 from flask import Flask, request, jsonify, Blueprint, current_app
+import logging
+import logging.config
+
 import model
+from stacksampler import ProfilingMiddleware
+
+log = logging.getLogger('visualizer')
+
+def get_config(path):
+    cfgobj = SafeConfigParser()
+    cfgobj.read(path)
+    cfg = dict([(section, dict(cfgobj.items(section))) for section in cfgobj.sections()])
+    assert cfg.get('global', {}).get('dbpath'), 'DBPATH is required'
+    assert cfg.get('collector', {}).get('secret_header'), 'secret_header is required'
+    assert cfg.get('collector', {}).get('hosts'), 'hosts required'
+
+    cfg['collector']['hosts'] = cfg['collector']['hosts'].split(',')
+    return cfg
 
 dashboard = Blueprint('dashboard', __name__, url_prefix='/', static_folder='static')
+collector = Blueprint('collector', __name__, url_prefix='/collector')
 
 def _parse_relative_date(datestr):
     return calendar.timegm(dateparser.parse(datestr).utctimetuple())
-
 
 class Node(object):
     def __init__(self, name):
@@ -51,6 +71,29 @@ class Node(object):
             return
         self.add(frames, value)
 
+@collector.route('/')
+def collect():
+    '''
+    gets called periodically by uwsgi cron
+    '''
+    db = model.ProflingModel(current_app.config['global']['dbpath'])
+    profiling_path = ProfilingMiddleware.PROFILING_PATH
+    secret_header = current_app.config['collector']['secret_header']
+
+    collected = 0
+    for host in current_app.config['collector']['hosts']:
+        try:
+            url = 'http://{}/{}'.format(host, profiling_path)
+            headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
+            resp = requests.get(url, headers=headers)
+            resp.raise_for_status()
+            payload = resp.json()
+            db.save(host, payload)
+            collected += len(payload['stacks'])
+            log.info('Data collected host: {} stacks: {}'.format(host, len(payload['stacks'])))
+        except Exception as exc:
+            log.warning('Problem with collecting samples host: {}, exc: {}'.format(host, exc))
+    return jsonify({'stacks_collected': collected})
 
 @dashboard.route('/data')
 def data():
@@ -62,29 +105,29 @@ def data():
         until = _parse_relative_date(until)
     threshold = float(request.args.get('threshold', 0))
     root = Node('root')
-    db = model.ProflingModel(current_app.config['DBPATH'])
+    db = model.ProflingModel(current_app.config['global']['DBPATH'])
     for frames, value in db.load():
         root.add(frames, value)
     return jsonify(root.serialize(threshold * root.value))
-
 
 @dashboard.route('/')
 def render():
     return dashboard.send_static_file('index.html')
 
-
-def make_app(cfg):
+def make_app(cfg_path):
     app = Flask('liveprofiler')
+    cfg = get_config(cfg_path)
     app.config.update(**cfg)
+    app.register_blueprint(collector)
+    app.register_blueprint(dashboard)
     return app
 
 @click.command()
+@click.option('--cfg_path', type=str)
 @click.option('--port', type=int, default=9999)
-@click.option('--dbpath', '-d', default='/var/lib/stackcollector/db')
-@click.option('--debug', default=False)
-def run(port, dbpath, debug):
-    config = {'DBPATH': dbpath}
-    app = make_app(config)
+@click.option('--debug', default=True)
+def run(cfg_path, port, debug):
+    app = make_app(cfg_path)
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 if __name__ == '__main__':
