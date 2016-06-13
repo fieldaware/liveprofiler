@@ -1,13 +1,10 @@
 import calendar
 import click
 import dateparser
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Blueprint, current_app
 import model
 
-
-app = Flask(__name__)
-app.config['DEBUG'] = True
-
+dashboard = Blueprint('dashboard', __name__, url_prefix='/', static_folder='static')
 
 def _parse_relative_date(datestr):
     return calendar.timegm(dateparser.parse(datestr).utctimetuple())
@@ -55,7 +52,7 @@ class Node(object):
         self.add(frames, value)
 
 
-@app.route('/data')
+@dashboard.route('/data')
 def data():
     from_ = request.args.get('from')
     if from_ is not None:
@@ -65,23 +62,30 @@ def data():
         until = _parse_relative_date(until)
     threshold = float(request.args.get('threshold', 0))
     root = Node('root')
-    db = model.ProflingModel(app.config['DBPATH'])
+    db = model.ProflingModel(current_app.config['DBPATH'])
     for frames, value in db.load():
         root.add(frames, value)
     return jsonify(root.serialize(threshold * root.value))
 
 
-@app.route('/')
+@dashboard.route('/')
 def render():
-    return app.send_static_file('index.html')
+    return dashboard.send_static_file('index.html')
 
+
+def make_app(cfg):
+    app = Flask('liveprofiler')
+    app.config.update(**cfg)
+    return app
 
 @click.command()
 @click.option('--port', type=int, default=9999)
 @click.option('--dbpath', '-d', default='/var/lib/stackcollector/db')
-def run(port, dbpath):
-    app.config['DBPATH'] = dbpath
-    app.run(host='0.0.0.0', port=port)
+@click.option('--debug', default=False)
+def run(port, dbpath, debug):
+    config = {'DBPATH': dbpath}
+    app = make_app(config)
+    app.run(host='0.0.0.0', port=port, debug=debug)
 
 if __name__ == '__main__':
     run()

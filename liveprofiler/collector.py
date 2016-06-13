@@ -2,10 +2,9 @@ import model
 import time
 import click
 import requests
-from nylas.logging import get_logger, configure_logging
+import logging
 
-configure_logging()
-log = get_logger()
+log = logging.getLogger('collector')
 
 def collect(dbpath, host, port, db):
     try:
