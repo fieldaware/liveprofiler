@@ -43,7 +43,7 @@ def sampler(request):
     return stacksampler.Sampler(0.001)
 
 @pytest.fixture()
-def visualizer_app(request):
+def liveprofiler_app(request):
     db_dir = tempfile.mkdtemp()
     cfg_list = [
         '[global]',

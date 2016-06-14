@@ -3,6 +3,7 @@ import model
 import requests
 import logging
 from flask import Blueprint, current_app, jsonify
+from urlparse import urljoin
 
 log = logging.getLogger('collector')
 
@@ -11,12 +12,12 @@ collector = Blueprint('collector', __name__, url_prefix='/collector')
 def fetch_samples(host):
     profiling_path = ProfilingMiddleware.PROFILING_PATH
     secret_header = current_app.config['collector']['secret_header']
-    url = 'http://{}/{}'.format(host, profiling_path)
+    url = urljoin('http://{}'.format(host), profiling_path)
     headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     payload = resp.json()
-    return payload['stacks']
+    return payload
 
 @collector.route('/')
 def collect():
@@ -27,11 +28,9 @@ def collect():
 
     collected = 0
     for host in current_app.config['collector']['hosts']:
-        try:
-            stacks = fetch_samples(host)
-            db.save(host, stacks)
-            collected += len(stacks)
-            log.info('Data collected host: {} stacks: {}'.format(host, len(stacks)))
-        except Exception as exc:
-            log.warning('Problem with collecting samples host: {}, exc: {}'.format(host, exc))
+        samples = fetch_samples(host)
+        db.save(host, samples)
+        stacks_count = len(samples['stacks'])
+        collected += stacks_count
+        log.info('Data collected host: {} stacks: {}'.format(host, stacks_count))
     return jsonify({'stacks_collected': collected})
