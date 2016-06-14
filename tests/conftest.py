@@ -2,7 +2,7 @@ import tempfile
 import webtest
 import pytest
 import flask
-from liveprofiler import stacksampler, model, visualizer
+from liveprofiler import stacksampler, model, app
 
 SAMPLER_INTERVAL = 1
 PROFILING_SECRET = 'secret'
@@ -29,7 +29,7 @@ def post_test():
     return 'app_endpoint'
 
 @pytest.fixture()
-def app(request):
+def simple_app(request):
     with_middleware = stacksampler.ProfilingMiddleware(application, SAMPLER_INTERVAL, PROFILING_SECRET)
     return webtest.TestApp(with_middleware)
 
@@ -57,4 +57,4 @@ def visualizer_app(request):
     with open(cfg_path, 'w') as f:
         f.writelines('\n'.join(cfg_list))
 
-    return webtest.TestApp(visualizer.make_app(cfg_path))
+    return webtest.TestApp(app.make_app(cfg_path))

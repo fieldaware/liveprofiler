@@ -1,29 +1,15 @@
 import calendar
-import click
 import dateparser
 
-from ConfigParser import SafeConfigParser
-from flask import Flask, request, jsonify, Blueprint, current_app
+from flask import request, jsonify, Blueprint, current_app
 import logging
 import logging.config
 
 import model
-from collector import collector
 
 log = logging.getLogger('visualizer')
 
-def get_config(path):
-    cfgobj = SafeConfigParser()
-    cfgobj.read(path)
-    cfg = dict([(section, dict(cfgobj.items(section))) for section in cfgobj.sections()])
-    assert cfg.get('global', {}).get('dbpath'), 'DBPATH is required'
-    assert cfg.get('collector', {}).get('secret_header'), 'secret_header is required'
-    assert cfg.get('collector', {}).get('hosts'), 'hosts required'
-
-    cfg['collector']['hosts'] = cfg['collector']['hosts'].split(',')
-    return cfg
-
-dashboard = Blueprint('dashboard', __name__, url_prefix='/', static_folder='static')
+visualizer = Blueprint('dashboard', __name__, url_prefix='/', static_folder='static')
 
 def _parse_relative_date(datestr):
     return calendar.timegm(dateparser.parse(datestr).utctimetuple())
@@ -69,7 +55,7 @@ class Node(object):
             return
         self.add(frames, value)
 
-@dashboard.route('/data')
+@visualizer.route('/data')
 def data():
     from_ = request.args.get('from')
     if from_ is not None:
@@ -84,25 +70,6 @@ def data():
         root.add(frames, value)
     return jsonify(root.serialize(threshold * root.value))
 
-@dashboard.route('/')
+@visualizer.route('/')
 def render():
-    return dashboard.send_static_file('index.html')
-
-def make_app(cfg_path):
-    app = Flask('liveprofiler')
-    cfg = get_config(cfg_path)
-    app.config.update(**cfg)
-    app.register_blueprint(collector)
-    app.register_blueprint(dashboard)
-    return app
-
-@click.command()
-@click.option('--cfg_path', type=str)
-@click.option('--port', type=int, default=9999)
-@click.option('--debug', default=True)
-def run(cfg_path, port, debug):
-    app = make_app(cfg_path)
-    app.run(host='0.0.0.0', port=port, debug=debug)
-
-if __name__ == '__main__':
-    run()
+    return visualizer.send_static_file('index.html')
