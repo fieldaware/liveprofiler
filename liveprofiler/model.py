@@ -40,9 +40,14 @@ class ProflingModel(object):
 
         with self.getdb() as db:
             for frame, entires in entries.items():
-                db[frame] = json.dumps(entires)
+                if frame in db:
+                    current_entires = json.loads(db[frame])
+                    current_entires.extend(entires)
+                    db[frame] = json.dumps(current_entires)
+                else:
+                    db[frame] = json.dumps(entires)
 
-    def load(self, from_=None, until_=None):
+    def load(self, host, from_=None, until_=None):
         results = []
         with self.getdb() as db:
             keys = db.keys()
@@ -50,10 +55,13 @@ class ProflingModel(object):
                 entries = json.loads(db[k])
                 value = 0
                 for e in entries:
+                    if e['host'] != host:
+                        continue
                     ts = int(e['time'])
                     v = int(e['count'])
-                    if ((from_ is None or ts >= from_) and (until_ is None or ts <= until_)):
+                    if (from_ is None or ts >= from_) and (until_ is None or ts <= until_):
                         value += v
                 frames = k.split(Sampler.STACK_SEPARATOR)
-                results.append((frames, value))
+                if value:
+                    results.append((frames, value))
         return results

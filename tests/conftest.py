@@ -9,6 +9,17 @@ PROFILING_SECRET = 'secret'
 
 application = flask.Flask(__name__)
 
+samples = {
+    u'elapsed': 1.2000219821929932,
+    u'granularity': 0.001,
+    u'stacks': [
+        {u'count': 128, u'frame': u'test_sampler(test_sampler);testing_function2(test_sampler)'},
+        {u'count': 126, u'frame': u'test_sampler(test_sampler);testing_function3(test_sampler)'},
+        {u'count': 50, u'frame': u'test_sampler(test_sampler);testing_function(test_sampler)'},
+        {u'count': 100, u'frame': u'test_sampler(test_sampler);testing_function(test_sampler)'}
+    ]
+}
+
 @application.route('/')
 def index():
     return 'app_endpoint'
