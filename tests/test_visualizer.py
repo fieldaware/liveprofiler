@@ -1,5 +1,7 @@
+import responses
 import os.path
 from liveprofiler import visualizer
+from conftest import samples
 
 here = lambda x: os.path.join(os.path.abspath(os.path.dirname(__file__)), x)
 
@@ -13,5 +15,14 @@ def test_config_load_to_dict():
             'secret_header': 'super!S3cr3t!',
         }} == config
 
+@responses.activate
 def test_visualizer_collector(visualizer_app):
-    visualizer_app.get('/collector/')
+    hosts = visualizer_app.app.config['collector']['hosts']
+
+    for host in hosts:
+        responses.add(
+            responses.GET, 'http://{}/liveprofiler'.format(host),
+            json=samples, status=200
+        )
+
+    res = visualizer_app.get('/collector/')

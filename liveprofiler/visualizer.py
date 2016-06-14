@@ -1,7 +1,6 @@
 import calendar
 import click
 import dateparser
-import requests
 
 from ConfigParser import SafeConfigParser
 from flask import Flask, request, jsonify, Blueprint, current_app
@@ -9,7 +8,7 @@ import logging
 import logging.config
 
 import model
-from stacksampler import ProfilingMiddleware
+from collector import collector
 
 log = logging.getLogger('visualizer')
 
@@ -25,7 +24,6 @@ def get_config(path):
     return cfg
 
 dashboard = Blueprint('dashboard', __name__, url_prefix='/', static_folder='static')
-collector = Blueprint('collector', __name__, url_prefix='/collector')
 
 def _parse_relative_date(datestr):
     return calendar.timegm(dateparser.parse(datestr).utctimetuple())
@@ -70,30 +68,6 @@ class Node(object):
         except ValueError:
             return
         self.add(frames, value)
-
-@collector.route('/')
-def collect():
-    '''
-    gets called periodically by uwsgi cron
-    '''
-    db = model.ProflingModel(current_app.config['global']['dbpath'])
-    profiling_path = ProfilingMiddleware.PROFILING_PATH
-    secret_header = current_app.config['collector']['secret_header']
-
-    collected = 0
-    for host in current_app.config['collector']['hosts']:
-        try:
-            url = 'http://{}/{}'.format(host, profiling_path)
-            headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
-            resp = requests.get(url, headers=headers)
-            resp.raise_for_status()
-            payload = resp.json()
-            db.save(host, payload)
-            collected += len(payload['stacks'])
-            log.info('Data collected host: {} stacks: {}'.format(host, len(payload['stacks'])))
-        except Exception as exc:
-            log.warning('Problem with collecting samples host: {}, exc: {}'.format(host, exc))
-    return jsonify({'stacks_collected': collected})
 
 @dashboard.route('/data')
 def data():

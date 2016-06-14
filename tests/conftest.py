@@ -44,9 +44,10 @@ def sampler(request):
 
 @pytest.fixture()
 def visualizer_app(request):
+    db_dir = tempfile.mkdtemp()
     cfg_list = [
         '[global]',
-        'DBPATH = /tmp/test',
+        'DBPATH = {}'.format(db_dir),
         '[collector]',
         'secret_header = super!S3cr3t!',
         'hosts=localhost,otherhost.fa,google.com',

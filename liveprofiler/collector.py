@@ -1,36 +1,37 @@
 from stacksampler import ProfilingMiddleware
 import model
-import time
 import requests
 import logging
+from flask import Blueprint, current_app, jsonify
 
 log = logging.getLogger('collector')
 
-def collect(db, host, secret_header):
+collector = Blueprint('collector', __name__, url_prefix='/collector')
+
+def fetch_samples(host):
     profiling_path = ProfilingMiddleware.PROFILING_PATH
+    secret_header = current_app.config['collector']['secret_header']
     url = 'http://{}/{}'.format(host, profiling_path)
     headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
-    try:
-        resp = requests.get(url, headers=headers)
-        resp.raise_for_status()
-    except (requests.ConnectionError, requests.HTTPError) as exc:
-        log.warning('Error collecting data', error=exc, host=host)
-        return
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
     payload = resp.json()
-    try:
-        db.save(host, payload)
-    except Exception as exc:
-        log.warning('Error saving data', error=exc, host=host)
-        return
-    log.info('Data collected', host=host, num_stacks=len(payload['stacks']))
+    return payload['stacks']
 
+@collector.route('/')
+def collect():
+    '''
+    gets called periodically by uwsgi cron
+    '''
+    db = model.ProflingModel(current_app.config['global']['dbpath'])
 
-def run(dbpath, host, secret_header, interval):
-    db = model.ProflingModel(dbpath)
-    while True:
-        for h in host:
-            collect(db, h, secret_header)
-        time.sleep(interval)
-
-if __name__ == '__main__':
-    run()
+    collected = 0
+    for host in current_app.config['collector']['hosts']:
+        try:
+            stacks = fetch_samples(host)
+            db.save(host, stacks)
+            collected += len(stacks)
+            log.info('Data collected host: {} stacks: {}'.format(host, len(stacks)))
+        except Exception as exc:
+            log.warning('Problem with collecting samples host: {}, exc: {}'.format(host, exc))
+    return jsonify({'stacks_collected': collected})
