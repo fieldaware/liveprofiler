@@ -21,7 +21,8 @@ def test_collector(liveprofiler_app):
     saved_otherhost = ProflingModel(liveprofiler_app.app.config['global']['dbpath']).load('otherhost.fa')
     saved_googleco = ProflingModel(liveprofiler_app.app.config['global']['dbpath']).load('google.com')
 
-    assert [(['test_sampler(test_sampler)', 'testing_function3(test_sampler)'], 126),
-            (['test_sampler(test_sampler)', 'testing_function2(test_sampler)'], 128),
-            (['test_sampler(test_sampler)', 'testing_function(test_sampler)'], 150)] \
-        == saved_googleco == saved_localhost == saved_otherhost
+    for loaded in (saved_googleco, saved_localhost, saved_otherhost):
+        assert len(loaded) == 3
+        assert (['test_sampler(test_sampler)', 'testing_function3(test_sampler)'], 126) in loaded
+        assert (['test_sampler(test_sampler)', 'testing_function2(test_sampler)'], 128) in loaded
+        assert (['test_sampler(test_sampler)', 'testing_function(test_sampler)'], 150) in loaded

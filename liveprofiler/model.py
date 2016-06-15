@@ -48,6 +48,7 @@ class ProflingModel(object):
                     db[frame] = json.dumps(entires)
 
     def load(self, host, from_=None, until_=None):
+        ''' might return results in random order '''
         results = []
         with self.getdb() as db:
             keys = db.keys()
