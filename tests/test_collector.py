@@ -37,3 +37,10 @@ def test_collector_host_collect_errors(liveprofiler_app, error_code):
     responses.add(responses.GET, 'http://localhost/liveprofiler', status=error_code)
     res = liveprofiler_app.get('/collector/')
     assert res.json == {'stacks_collected': 0}
+
+@pytest.mark.liveprofiler_app(hosts='localhost')
+@responses.activate
+def test_collector_http_call_not_a_json(liveprofiler_app):
+    responses.add(responses.GET, 'http://localhost/liveprofiler', status=200, body='not a json')
+    res = liveprofiler_app.get('/collector/')
+    assert res.json == {'stacks_collected': 0}

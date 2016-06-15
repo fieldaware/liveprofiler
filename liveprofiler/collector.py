@@ -20,8 +20,11 @@ def fetch_samples(host):
     except requests.exceptions.HTTPError as e:
         log.warning('Calling {} resulted in error: {}'.format(host, e.message))
         return
-
-    payload = resp.json()
+    try:
+        payload = resp.json()
+    except ValueError as e:
+        log.warning('Response from {} is not a valid json: {}'.format(host, resp.text))
+        return
     return payload
 
 @collector.route('/')
