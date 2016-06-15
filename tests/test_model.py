@@ -27,6 +27,7 @@ def test_save(db):
 
     with db.getdb() as d:
         records = dict([(k, d[k]) for k in d.keys()])
+        assert len(records) == 3
 
         assert {"count": 50, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function(test_sampler)'])
         assert {"count": 100, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function(test_sampler)'])
@@ -38,6 +39,8 @@ def test_save(db):
 
     with db.getdb() as d:
         records = dict([(k, d[k]) for k in d.keys()])
+        assert len(records) == 3
+
         assert {"count": 50, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function(test_sampler)'])
         assert {"count": 100, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function(test_sampler)'])
         assert {"count": 128, "host": "localhost", "time": 1} in json.loads(records['test_sampler(test_sampler);testing_function2(test_sampler)'])
