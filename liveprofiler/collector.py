@@ -14,8 +14,13 @@ def fetch_samples(host):
     secret_header = current_app.config['collector']['secret_header']
     url = urljoin('http://{}'.format(host), profiling_path)
     headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
-    resp = requests.get(url, headers=headers)
-    resp.raise_for_status()
+    try:
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        log.warning('Calling {} resulted in error: {}'.format(host, e.message))
+        return
+
     payload = resp.json()
     return payload
 
@@ -25,10 +30,11 @@ def collect():
     gets called periodically by uwsgi cron
     '''
     db = model.ProflingModel(current_app.config['global']['dbpath'])
-
     collected = 0
     for host in current_app.config['collector']['hosts']:
         samples = fetch_samples(host)
+        if not samples:
+            continue
         db.save(host, samples)
         stacks_count = len(samples['stacks'])
         collected += stacks_count

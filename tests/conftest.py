@@ -44,13 +44,14 @@ def sampler(request):
 
 @pytest.fixture()
 def liveprofiler_app(request):
+    fix_params = request.node.get_marker('liveprofiler_app').kwargs
     db_dir = tempfile.mkdtemp()
     cfg_list = [
         '[global]',
         'DBPATH = {}'.format(db_dir),
         '[collector]',
         'secret_header = super!S3cr3t!',
-        'hosts=localhost,otherhost.fa,google.com',
+        'hosts={}'.format(fix_params['hosts']),
     ]
 
     _, cfg_path = tempfile.mkstemp()

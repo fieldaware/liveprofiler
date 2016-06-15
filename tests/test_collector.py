@@ -1,10 +1,12 @@
+import pytest
 import mock
 import responses
 from conftest import samples
 from liveprofiler.model import ProflingModel
 
+@pytest.mark.liveprofiler_app(hosts='localhost,otherhost.fa,google.com')
 @responses.activate
-def test_collector(liveprofiler_app):
+def test_collector_happy_path(liveprofiler_app):
     hosts = liveprofiler_app.app.config['collector']['hosts']
 
     for host in hosts:
@@ -26,3 +28,12 @@ def test_collector(liveprofiler_app):
         assert (['test_sampler(test_sampler)', 'testing_function3(test_sampler)'], 126) in loaded
         assert (['test_sampler(test_sampler)', 'testing_function2(test_sampler)'], 128) in loaded
         assert (['test_sampler(test_sampler)', 'testing_function(test_sampler)'], 150) in loaded
+
+
+@pytest.mark.liveprofiler_app(hosts='localhost')
+@pytest.mark.parametrize('error_code', (400, 401, 403, 404, 500, 502, 503))
+@responses.activate
+def test_collector_host_collect_errors(liveprofiler_app, error_code):
+    responses.add(responses.GET, 'http://localhost/liveprofiler', status=error_code)
+    res = liveprofiler_app.get('/collector/')
+    assert res.json == {'stacks_collected': 0}
