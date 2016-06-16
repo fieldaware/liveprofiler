@@ -106,7 +106,7 @@
         }
     })
 
-    d3.json("/data/{{ host }}/" + location.search, function(root) {
+    d3.json("{{ url_for('visualizer.profile', host=host)}}" + location.search, function(root) {
         d3.select("#chart")
             .datum(root)
             .call(flameGraph);

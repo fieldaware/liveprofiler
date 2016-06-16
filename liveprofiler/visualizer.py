@@ -66,8 +66,8 @@ def index():
     hosts = [urllib.quote(i) for i in current_app.config['collector']['hosts']]
     return render_template('index.html', hosts=hosts)
 
-@visualizer.route('data/<host>/')
-def data(host):
+@visualizer.route('profile/<host>/')
+def profile(host):
     host = urllib.unquote(host)
     from_ = request.args.get('from')
     if from_ is not None:
