@@ -2,7 +2,7 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-  <link rel="stylesheet" type="text/css" href="static/d3.flameGraph.css">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='d3.flameGraph.css') }}">
   <style type="text/css">
       body {
         font-size: 11px;
@@ -22,9 +22,9 @@
         </div>
   </div>
   <div><span id="details"></span></div>
-  <script type="text/javascript" src="static/d3.js"></script>
-  <script type="text/javascript" src="static/d3.tip.v0.6.3.js"></script>
-  <script type="text/javascript" src="static/d3.flameGraph.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='d3.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='d3.tip.v0.6.3.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='d3.flameGraph.js') }}"></script>
 
   <script type="text/javascript">
 
@@ -80,7 +80,7 @@
 
     var flameGraph = d3.flameGraph()
       .height(600)
-      .width(1200)
+      .width(window.innerWidth)
       .cellHeight(18)
       .transitionDuration(750)
       .transitionEase('cubic-in-out')
@@ -106,7 +106,7 @@
         }
     })
 
-    d3.json("/data" + location.search, function(root) {
+    d3.json("/data/{{ host }}/" + location.search, function(root) {
         d3.select("#chart")
             .datum(root)
             .call(flameGraph);

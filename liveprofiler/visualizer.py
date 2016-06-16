@@ -1,7 +1,8 @@
+import urllib
 import calendar
 import dateparser
 
-from flask import request, jsonify, Blueprint, current_app
+from flask import request, jsonify, Blueprint, current_app, render_template
 import logging
 import logging.config
 
@@ -9,7 +10,7 @@ import model
 
 log = logging.getLogger('visualizer')
 
-visualizer = Blueprint('dashboard', __name__, url_prefix='/', static_folder='static')
+visualizer = Blueprint('visualizer', __name__, url_prefix='/', static_folder='static')
 
 def _parse_relative_date(datestr):
     return calendar.timegm(dateparser.parse(datestr).utctimetuple())
@@ -55,8 +56,19 @@ class Node(object):
             return
         self.add(frames, value)
 
-@visualizer.route('/data')
-def data():
+
+@visualizer.route('graph/<host>/')
+def graph(host):
+    return render_template('graph.html', host=host)
+
+@visualizer.route('/')
+def index():
+    hosts = [urllib.quote(i) for i in current_app.config['collector']['hosts']]
+    return render_template('index.html', hosts=hosts)
+
+@visualizer.route('data/<host>/')
+def data(host):
+    host = urllib.unquote(host)
     from_ = request.args.get('from')
     if from_ is not None:
         from_ = _parse_relative_date(from_)
@@ -65,11 +77,7 @@ def data():
         until = _parse_relative_date(until)
     threshold = float(request.args.get('threshold', 0))
     root = Node('root')
-    db = model.ProflingModel(current_app.config['global']['DBPATH'])
-    for frames, value in db.load():
+    db = model.ProflingModel(current_app.config['global']['dbpath'])
+    for frames, value in db.load(host):
         root.add(frames, value)
     return jsonify(root.serialize(threshold * root.value))
-
-@visualizer.route('/')
-def render():
-    return visualizer.send_static_file('index.html')

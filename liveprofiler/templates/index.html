@@ -1,0 +1,5 @@
+<ul>
+{% for host in hosts %}
+  <li> <a href="{{ url_for('visualizer.graph', host=host) }}"> {{ host }} </a>
+{% endfor %}
+<ul>
