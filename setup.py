@@ -5,6 +5,10 @@ setup(
     name='liveprofiler',
     version='0.0.1',
     packages=find_packages(),
-    include_package_data=True,
     install_requires=read_file("requirements.txt"),
+    include_package_data=True,
+    package_data={
+        'static': 'liveprofiler/static/*',
+        'templates': 'liveprofiler/templates/*'
+    },
 )
