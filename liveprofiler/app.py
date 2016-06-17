@@ -17,7 +17,7 @@ def get_config(path):
     cfgobj = SafeConfigParser()
     cfgobj.read(path)
     cfg = dict([(section, dict(cfgobj.items(section))) for section in cfgobj.sections()])
-    assert cfg.get('global', {}).get('dbpath'), 'DBPATH is required'
+    assert cfg.get('global', {}).get('dbpath'), 'dbpath is required'
     assert cfg.get('collector', {}).get('secret_header'), 'secret_header is required'
     assert cfg.get('collector', {}).get('hosts'), 'hosts required'
 
