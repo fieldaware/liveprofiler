@@ -10,7 +10,7 @@ import model
 
 log = logging.getLogger('visualizer')
 
-visualizer = Blueprint('visualizer', __name__, url_prefix='/', static_folder='static')
+visualizer = Blueprint('visualizer', __name__, url_prefix='/', template_folder='templates', static_folder='static')
 
 def _parse_relative_date(datestr):
     return calendar.timegm(dateparser.parse(datestr).utctimetuple())
