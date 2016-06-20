@@ -1,4 +1,4 @@
-from ConfigParser import SafeConfigParser
+from ConfigParser import RawConfigParser
 from flask import Flask
 import click
 
@@ -14,7 +14,7 @@ def make_app(cfg_path):
     return app
 
 def get_config(path):
-    cfgobj = SafeConfigParser()
+    cfgobj = RawConfigParser()
     cfgobj.read(path)
     cfg = dict([(section, dict(cfgobj.items(section))) for section in cfgobj.sections()])
     assert cfg.get('global', {}).get('dbpath'), 'dbpath is required'
@@ -31,6 +31,8 @@ def get_config(path):
 @click.option('--debug', default=True)
 def run(cfg_path, port, debug):
     app = make_app(cfg_path)
+    import logging.config
+    logging.config.fileConfig(cfg_path)
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 if __name__ == '__main__':

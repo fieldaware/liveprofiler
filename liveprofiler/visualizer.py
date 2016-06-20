@@ -64,6 +64,7 @@ def graph(host):
 @visualizer.route('/')
 def index():
     hosts = [urllib.quote(i) for i in current_app.config['collector']['hosts']]
+    log.info('fetching list of hosts: {}'.format(hosts))
     return render_template('index.html', hosts=hosts)
 
 @visualizer.route('profile/<host>/')
