@@ -10,7 +10,7 @@ setup(
     license='MIT',
     version='0.1.0',
     description='Package for profiling WSGI applications on production',
-    long_description=io.open('README.md', encoding='utf-8').read(),
+    long_description=io.open('README.rst', encoding='utf-8').read(),
     packages=find_packages(),
     install_requires=read_file('requirements.txt'),
     include_package_data=True,
