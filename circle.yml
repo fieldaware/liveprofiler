@@ -14,3 +14,12 @@ dependencies:
 test:
   override:
     - tox -- -vv --junit-xml=$CIRCLE_ARTIFACTS/liveprofiler_tests_results.xml --cov-report html
+
+deployment:
+  release:
+    branch:
+      - master
+    commands:
+      - pip install -U twine wheel
+      - python setup.py bdist_wheel
+      - twine upload -u fieldaware -p "$PYPI_PASSWORD" dist/*whl
