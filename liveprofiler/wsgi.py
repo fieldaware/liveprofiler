@@ -1,5 +1,5 @@
 import uwsgi
-CONFIG = uwsgi.opt.get('app_config')
+CONFIG = uwsgi.opt.get('app_config')  # uwsgi --set app_config=/path/config.ini
 assert CONFIG is not None, 'MISSING CONFIG PARAM'
 
 import logging.config
