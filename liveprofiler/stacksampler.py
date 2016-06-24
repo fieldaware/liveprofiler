@@ -18,7 +18,7 @@ class Sampler(object):
     this uses signals, it only works on the main thread.
     """
     def __init__(self, interval):
-        self.interval = interval
+        self.interval = float(interval)
         self._started = None
         self._stack_counts = collections.defaultdict(int)
 
