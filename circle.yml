@@ -4,6 +4,7 @@ machine:
 
 dependencies:
   override:
+    - "pip install -U tox"
     - "tox --notest"
     - ".tox/py27/bin/pip install -r requirements.txt"
     - ".tox/py27/bin/pip install -r test_requirements.txt"
