@@ -1,3 +1,4 @@
 include requirements.txt test_requirements.txt
+global-include *.md
 global-include *.py
 global-include *.js *.css *.html
