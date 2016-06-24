@@ -5,11 +5,14 @@ import time
 import contextlib
 import dbm
 from os.path import join
+import os
 from stacksampler import Sampler
 
 class ProflingModel(object):
     def __init__(self, dbdir):
         assert dbdir.startswith('/')
+        if not os.path.isdir(dbdir):
+            os.makedirs(dbdir)
         self.dbdir = dbdir
 
     @contextlib.contextmanager
