@@ -14,12 +14,12 @@
 </head>
 
 <body>
-  <div id="searchbar">
-    Filter: <input type="text" name="filter" id="filter">
-  </div>
   <div class="container">
         <div id="chart">
         </div>
+    <div id="searchbar">
+      Filter: <input type="text" name="filter" id="filter">
+    </div>
   </div>
   <div><span id="details"></span></div>
   <script type="text/javascript" src="{{ url_for('static', filename='d3.js') }}"></script>
@@ -79,7 +79,7 @@
     }
 
     var flameGraph = d3.flameGraph()
-      .height(window.innerHeight)
+      .height(3000)
       .width(window.innerWidth)
       .cellHeight(18)
       .transitionDuration(750)
@@ -110,6 +110,8 @@
         d3.select("#chart")
             .datum(root)
             .call(flameGraph);
+        var elem = document.getElementById('chart');
+        document.body.scrollTop = elem.scrollHeight;
     });
   </script>
 </body>

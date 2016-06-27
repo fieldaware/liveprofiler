@@ -12,6 +12,7 @@ PROFILING_PATH = '/liveprofiler'
 SECRET_HEADER_NAME = 'PROFILER_TOKEN'
 
 def fetch_samples(host):
+    log.info('Fetching {}'.format(host))
     profiling_path = PROFILING_PATH
     secret_header = current_app.config['collector']['secret_header']
     url = urljoin('http://{}'.format(host), profiling_path)
