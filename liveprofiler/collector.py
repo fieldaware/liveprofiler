@@ -1,4 +1,3 @@
-from stacksampler import ProfilingMiddleware
 import model
 import requests
 import logging
@@ -9,11 +8,14 @@ log = logging.getLogger('collector')
 
 collector = Blueprint('collector', __name__, url_prefix='/collector')
 
+PROFILING_PATH = '/liveprofiler'
+SECRET_HEADER_NAME = 'PROFILER_TOKEN'
+
 def fetch_samples(host):
-    profiling_path = ProfilingMiddleware.PROFILING_PATH
+    profiling_path = PROFILING_PATH
     secret_header = current_app.config['collector']['secret_header']
     url = urljoin('http://{}'.format(host), profiling_path)
-    headers = {ProfilingMiddleware.SECRET_HEADER_NAME: secret_header}
+    headers = {SECRET_HEADER_NAME: secret_header}
     try:
         resp = requests.get(url, headers=headers)
         resp.raise_for_status()
