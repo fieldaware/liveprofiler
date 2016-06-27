@@ -7,7 +7,7 @@ setup(
     author_email='piotr.szymanski@fieldaware.com',
     url='https://github.com/fieldaware/liveprofiler',
     license='MIT',
-    version='0.1.1',
+    version='0.2.0',
     description='Package for profiling WSGI applications on production',
     long_description=open('README.md').read(),
     packages=find_packages(),

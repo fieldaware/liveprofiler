@@ -1,13 +1,10 @@
 import tempfile
 import webtest
 import pytest
-import flask
-from liveprofiler import stacksampler, model, app
+from liveprofiler import model, app
 
 SAMPLER_INTERVAL = 1
 PROFILING_SECRET = 'secret'
-
-application = flask.Flask(__name__)
 
 samples = {
     u'elapsed': 1.2000219821929932,
@@ -20,27 +17,10 @@ samples = {
     ]
 }
 
-@application.route('/')
-def index():
-    return 'app_endpoint'
-
-@application.route('/post_test', methods=['POST'])
-def post_test():
-    return 'app_endpoint'
-
-@pytest.fixture()
-def simple_app(request):
-    with_middleware = stacksampler.ProfilingMiddleware(application, SAMPLER_INTERVAL, PROFILING_SECRET)
-    return webtest.TestApp(with_middleware)
-
 @pytest.fixture()
 def db(request):
     d = tempfile.mkdtemp()
     return model.ProflingModel(d)
-
-@pytest.fixture()
-def sampler(request):
-    return stacksampler.Sampler(0.001)
 
 @pytest.fixture()
 def liveprofiler_app(request):
