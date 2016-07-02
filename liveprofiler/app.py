@@ -43,7 +43,7 @@ def run(cfg_path, port, debug):
     app = make_app(cfg_path)
     import logging.config
     logging.config.fileConfig(cfg_path)
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
 
 if __name__ == '__main__':
     run()
