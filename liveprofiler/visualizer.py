@@ -1,4 +1,3 @@
-import urllib
 import calendar
 import dateparser
 
@@ -63,13 +62,10 @@ def graph(host):
 
 @visualizer.route('/')
 def index():
-    hosts = [urllib.quote(i) for i in current_app.config['collector']['hosts']]
-    log.info('fetching list of hosts: {}'.format(hosts))
-    return render_template('index.html', hosts=hosts)
+    return render_template('index.html', hosts=current_app.config['collector']['hosts'])
 
 @visualizer.route('profile/<host>/')
 def profile(host):
-    host = urllib.unquote(host)
     from_ = request.args.get('from')
     if from_ is not None:
         from_ = _parse_relative_date(from_)

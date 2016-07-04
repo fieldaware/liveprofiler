@@ -11,10 +11,9 @@ collector = Blueprint('collector', __name__, url_prefix='/collector')
 PROFILING_PATH = '/liveprofiler'
 SECRET_HEADER_NAME = 'PROFILER_TOKEN'
 
-def fetch_samples(host):
+def fetch_samples(host, secret_header):
     log.info('Fetching {}'.format(host))
     profiling_path = PROFILING_PATH
-    secret_header = current_app.config['collector']['secret_header']
     url = urljoin('http://{}'.format(host), profiling_path)
     headers = {SECRET_HEADER_NAME: secret_header}
     try:
@@ -30,19 +29,27 @@ def fetch_samples(host):
         return
     return payload
 
-@collector.route('/')
-def collect():
-    '''
-    gets called periodically by uwsgi cron
-    '''
-    db = model.ProflingModel(current_app.config['global']['dbpath'])
+
+def _collect(dbpath, hosts, secret_header):
+    db = model.ProflingModel(dbpath)
     collected = 0
-    for host in current_app.config['collector']['hosts']:
-        samples = fetch_samples(host)
+    for host in hosts:
+        samples = fetch_samples(host, secret_header)
         if not samples:
+            log.warning('No samples has been collected from: {}'.format(host))
             continue
         db.save(host, samples)
         stacks_count = len(samples['stacks'])
         collected += stacks_count
         log.info('Data collected host: {} stacks: {}'.format(host, stacks_count))
-    return jsonify({'stacks_collected': collected})
+    return {'stacks_collected': collected}
+
+@collector.route('/')
+def collect():
+    '''
+    gets called periodically by uwsgi cron
+    '''
+    dbpath = current_app.config['global']['dbpath']
+    hosts = current_app.config['collector']['hosts']
+    secret = current_app.config['collector']['secret_header']
+    return jsonify(_collect(dbpath, hosts, secret))
