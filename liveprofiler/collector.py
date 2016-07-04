@@ -36,6 +36,7 @@ def _collect(dbpath, hosts, secret_header):
     for host in hosts:
         samples = fetch_samples(host, secret_header)
         if not samples:
+            log.warning('No samples has been collected from: {}'.format(host))
             continue
         db.save(host, samples)
         stacks_count = len(samples['stacks'])
