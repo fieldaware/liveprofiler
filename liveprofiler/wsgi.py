@@ -12,7 +12,7 @@ application = app.make_app(CONFIG)
 from liveprofiler import collector
 import uwsgidecorators
 
-def collect():
+def __start_collector():
     cfg = app.get_config(CONFIG)
     interval = int(cfg['collector'].get('interval', 60))
     dbpath = cfg['global']['dbpath']
@@ -24,4 +24,4 @@ def collect():
         log.info('Crontick from uwsgi timer, sig: {}'.format(sig))
         collector._collect(dbpath, hosts, secret_header)
 
-collect()
+__start_collector()
