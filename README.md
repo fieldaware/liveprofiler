@@ -76,7 +76,7 @@ Then visit `http://localhost:9999/`.
 
 # uWSGI integration
 
-* Use at least 2 workers (processes) to run visualizer - one for visulizer and one for collector
-* Visualizer uses [uWSGI decorators](http://uwsgi-docs.readthedocs.io/en/latest/PythonDecorators.html) to sechdule collector calls - therefore `master = true` has to be enabled in uWSGI configuration
-* `app_config` is a path to the visualizer configuration file - it has to be set and it should be absolute path
+* Use at least 2 workers (processes) to run visualizer - one for visualizer and one for collector
+* Visualizer uses [uWSGI decorators](http://uwsgi-docs.readthedocs.io/en/latest/PythonDecorators.html) to schedule collector calls - therefore `master = true` has to be enabled in uWSGI configuration
+* `app_config` is a path to the visualizer configuration file - it must be set and it recommend it be an absolute path
 * if you are running visualizer with sampler enabled please check required uWSGI configuration to make it running
